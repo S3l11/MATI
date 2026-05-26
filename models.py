@@ -305,4 +305,3 @@ def get_model(model_name: str):
         return UNETR_ModalityAware_E()
 
     raise ValueError(f"Unknown model '{model_name}'")
-    
