@@ -139,7 +139,7 @@ If you use MATI or its instantiations (ModaUNETR<sup>S</sup> and ModaUNETR<sup>E
 @inproceedings{tomassini2026mati,
   title     = {Structured Modality-Aware Token Interaction for Multimodal Medical Imaging},
   author    = {Tomassini, Selene and Chaudhry, Hafiza Ayesha Hoor and Galdelli, Alessandro and Giorgini, Paolo},
-  booktitle = {Proceedings of the Thirty-Fifth International Joint Conference on Artificial Intelligence and the Twenty-Eighth European Conference on Artificial Intelligence},
+  booktitle = {Proceedings of 35th International Joint Conference on Artificial Intelligence - 29th European Conference on Artificial Intelligence},
   year      = {2026}
 }
 ```
