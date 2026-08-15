@@ -130,7 +130,7 @@ hidden_states = [Z3, Z6, Z9, Z12]
 - ModaUNETR<sup>S</sup> preserves the UNETR ViT encoder and applies MATI only to skip-token representations.
 - ModaUNETR<sup>E</sup> modifies the ViT forward pass by injecting MATI directly into the running token stream.
 - No modality-specific encoders, additional token streams, or cross-attention streams are introduced.
-- Modality structure does not necessarily require multiple streams or cross-attention; it can be explicitly encoded inside a single token embedding space.
+- Modality structure does not necessarily require multiple streams; it can be explicitly encoded inside a single token embedding space.
 
 ---
 
