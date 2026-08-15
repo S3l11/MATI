@@ -74,7 +74,7 @@ Z6 = MATI(Z6)
 Z9 = MATI(Z9)
 ```
 
-The ViT encoder itself is not modified. The refined skip tokens are then projected and passed to the standard UNETR convolutional decoder.
+This placement targets intermediate semantic representations, where global contextual information has already been established but before token-to-feature-map projection and spatial decoding. The ViT encoder itself is not modified. The refined skip tokens are then projected and passed to the standard UNETR convolutional decoder.
 
 ### ModaUNETR<sup>E</sup>
 
@@ -89,6 +89,8 @@ MATI is injected into the ViT token stream after transformer blocks 3 and 6, cor
 ```python
 {2, 5, 8, 11} # Z3, Z6, Z9, Z12
 ```
+
+MATI updates the running token stream. Modality-aware interaction influences both the decoder inputs and the internal transformer representation hierarchy.
 
 ---
 
@@ -128,6 +130,7 @@ hidden_states = [Z3, Z6, Z9, Z12]
 - ModaUNETR<sup>S</sup> preserves the UNETR ViT encoder and applies MATI only to skip-token representations.
 - ModaUNETR<sup>E</sup> modifies the ViT forward pass by injecting MATI directly into the running token stream.
 - No modality-specific encoders, additional token streams, or cross-attention streams are introduced.
+- Modality structure does not necessarily require multiple streams or cross-attention; it can be explicitly encoded inside a single token embedding space.
 
 ---
 
