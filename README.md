@@ -139,10 +139,17 @@ hidden_states = [Z3, Z6, Z9, Z12]
 If you use MATI or its instantiations (ModaUNETR<sup>S</sup> and ModaUNETR<sup>E</sup>) in your work, please cite the following paper:
 
 ```bibtex
-@inproceedings{tomassini2026mati,
+@inproceedings{ijcai2026p769,
   title     = {Structured Modality-Aware Token Interaction for Multimodal Medical Imaging},
   author    = {Tomassini, Selene and Chaudhry, Hafiza Ayesha Hoor and Galdelli, Alessandro and Giorgini, Paolo},
-  booktitle = {Proceedings of 35th International Joint Conference on Artificial Intelligence - 29th European Conference on Artificial Intelligence},
-  year      = {2026}
+  booktitle = {Proceedings of the Thirty-Fifth International Joint Conference on Artificial Intelligence, {IJCAI-26}},
+  publisher = {International Joint Conferences on Artificial Intelligence Organization},
+  editor    = {Diego Calvanese},
+  pages     = {6913--6921},
+  year      = {2026},
+  month     = {8},
+  note      = {AI and Health},
+  doi       = {10.24963/ijcai.2026/769},
+  url       = {https://doi.org/10.24963/ijcai.2026/769},
 }
 ```
