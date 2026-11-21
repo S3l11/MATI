@@ -1,62 +1,34 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from mati import ModalityAwareTokenInteraction
 from monai.networks.nets import UNETR, SwinUNETR
 
 
 # =========================================================
-# Modality-Aware Token Interaction (MATI)
+# UNETR baseline (with skip locations described in the paper)
 # =========================================================
-class ModalityAwareTokenInteraction(nn.Module):
-    def __init__(self, embed_dim, num_modalities=4, num_heads=4):
-        super().__init__()
-        assert embed_dim % num_modalities == 0
+class UNETR_Baseline(UNETR):
+    def forward(self, x_in):
+        vit_out, hidden_states = self.vit(x_in)
 
-        self.num_modalities = num_modalities
-        self.sub_dim = embed_dim // num_modalities
+        Z3 = hidden_states[2]
+        Z6 = hidden_states[5]
+        Z9 = hidden_states[8]
 
-        self.norms = nn.ModuleList([
-            nn.LayerNorm(self.sub_dim)
-            for _ in range(num_modalities)
-        ])
+        enc1 = self.encoder1(x_in)
+        enc2 = self.encoder2(self.proj_feat(Z3))
+        enc3 = self.encoder3(self.proj_feat(Z6))
+        enc4 = self.encoder4(self.proj_feat(Z9))
 
-        self.attns = nn.ModuleList([
-            nn.MultiheadAttention(
-                embed_dim=self.sub_dim,
-                num_heads=num_heads,
-                batch_first=True,
-            )
-            for _ in range(num_modalities)
-        ])
+        vit_feat = self.proj_feat(vit_out)
 
-        self.mix_proj = nn.Sequential(
-            nn.Linear(self.sub_dim * num_modalities, num_modalities),
-            nn.Sigmoid(),
-        )
+        dec4 = self.decoder5(vit_feat, enc4)
+        dec3 = self.decoder4(dec4, enc3)
+        dec2 = self.decoder3(dec3, enc2)
+        dec1 = self.decoder2(dec2, enc1)
 
-    def forward(self, x):
-        # x: [B, N, C]
-        chunks = torch.chunk(x, self.num_modalities, dim=-1)
-        updated = []
-
-        # Intra-subspace refinement
-        for i in range(self.num_modalities):
-            xi = chunks[i]
-            xi_norm = self.norms[i](xi)
-            attn_out, _ = self.attns[i](xi_norm, xi_norm, xi_norm)
-            updated.append(xi + attn_out)
-
-        # Inter-subspace gated mixing
-        summaries = [u.mean(dim=1) for u in updated]          # M x [B, C/M]
-        summary_cat = torch.cat(summaries, dim=-1)            # [B, C]
-        mix_weights = self.mix_proj(summary_cat)              # [B, M]
-        mix_weights = mix_weights.unsqueeze(1).unsqueeze(-1)  # [B, 1, M, 1]
-
-        stacked = torch.stack(updated, dim=2)                 # [B, N, M, C/M]
-        mixed = (stacked * mix_weights).sum(dim=2)            # [B, N, C/M]
-
-        refined = [u + mixed for u in updated]
-        return torch.cat(refined, dim=-1)                     # [B, N, C]
+        return self.out(dec1)
 
 
 # =========================================================
@@ -83,7 +55,7 @@ class UNETR_ModalityAware_S(nn.Module):
             hidden_size=hidden_size,
             mlp_dim=mlp_dim,
             num_heads=num_heads,
-            pos_embed="perceptron",
+            proj_type="perceptron",
             norm_name="instance",
             res_block=True,
         )
@@ -94,8 +66,10 @@ class UNETR_ModalityAware_S(nn.Module):
     def forward(self, x):
         vit_out, hidden_states = self.unetr.vit(x)
 
-        # According to UNETR/MONAI: hidden_states = [Z3, Z6, Z9, Z12]
-        Z3, Z6, Z9, _Z12 = hidden_states
+        # MONAI returns [Z1, Z2, ..., Z12]
+        Z3 = hidden_states[2]
+        Z6 = hidden_states[5]
+        Z9 = hidden_states[8]
 
         Z6 = self.mati_z6(Z6)
         Z9 = self.mati_z9(Z9)
@@ -140,7 +114,7 @@ class UNETR_ModalityAware_E(nn.Module):
             hidden_size=hidden_size,
             mlp_dim=mlp_dim,
             num_heads=num_heads,
-            pos_embed="perceptron",
+            proj_type="perceptron",
             norm_name="instance",
             res_block=True,
         )
@@ -280,7 +254,7 @@ def get_model(model_name: str):
     name = model_name.lower()
 
     if name == "unetr":
-        return UNETR(
+        return UNETR_Baseline(
             in_channels=4,
             out_channels=3,
             img_size=(128, 128, 128),
@@ -288,6 +262,7 @@ def get_model(model_name: str):
             hidden_size=768,
             mlp_dim=3072,
             num_heads=12,
+            proj_type="perceptron",
             norm_name="instance",
             res_block=True,
         )
