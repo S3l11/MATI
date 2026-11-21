@@ -5,11 +5,25 @@ import torch.nn.functional as F
 from mati import ModalityAwareTokenInteraction
 from monai.networks.nets import UNETR
 
+def replace_leaky_relu(module):
+    for name, child in list(module.named_children()):
+        if isinstance(child, nn.LeakyReLU):
+            setattr(
+                module,
+                name,
+                nn.ReLU(inplace=child.inplace),
+            )
+        else:
+            replace_leaky_relu(child)
 
 # =========================================================
 # UNETR baseline 
 # =========================================================
 class UNETR_Baseline(UNETR):
+    def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    replace_leaky_relu(self)
+    
     def forward(self, x_in):
         vit_out, hidden_states = self.vit(x_in)
 
@@ -31,7 +45,6 @@ class UNETR_Baseline(UNETR):
 
         return self.out(dec1)
 
-
 # =========================================================
 # ModaUNETR^S
 # =========================================================
@@ -41,6 +54,7 @@ class UNETR_ModalityAware_S(nn.Module):
         img_size=(128, 128, 128),
         in_channels=4,
         out_channels=3,
+        #feature_size=64,
         feature_size=16,
         hidden_size=768,
         num_heads=12,
@@ -57,9 +71,11 @@ class UNETR_ModalityAware_S(nn.Module):
             mlp_dim=mlp_dim,
             num_heads=num_heads,
             proj_type="perceptron",
-            norm_name="instance",
+            norm_name="batch",
             res_block=True,
         )
+
+        replace_leaky_relu(self.unetr)
 
         self.mati_z6 = ModalityAwareTokenInteraction(hidden_size)
         self.mati_z9 = ModalityAwareTokenInteraction(hidden_size)
@@ -88,7 +104,6 @@ class UNETR_ModalityAware_S(nn.Module):
 
         return self.unetr.out(dec1)
 
-
 # =========================================================
 # ModaUNETR^E
 # =========================================================
@@ -98,6 +113,7 @@ class UNETR_ModalityAware_E(nn.Module):
         img_size=(128, 128, 128),
         in_channels=4,
         out_channels=3,
+        #feature_size=64,
         feature_size=16,
         hidden_size=768,
         num_heads=12,
@@ -115,9 +131,11 @@ class UNETR_ModalityAware_E(nn.Module):
             mlp_dim=mlp_dim,
             num_heads=num_heads,
             proj_type="perceptron",
-            norm_name="instance",
+            norm_name="batch",
             res_block=True,
         )
+
+        replace_leaky_relu(self.unetr)
 
         self.mati_block_indices = mati_block_indices
         self.mati_blocks = nn.ModuleDict({
@@ -158,7 +176,6 @@ class UNETR_ModalityAware_E(nn.Module):
 
         return self.unetr.out(dec1)
 
-
 # =========================================================
 # Model getter
 # =========================================================
@@ -170,12 +187,13 @@ def get_model(model_name: str):
             in_channels=4,
             out_channels=3,
             img_size=(128, 128, 128),
+            #feature_size=64,
             feature_size=16,
             hidden_size=768,
             mlp_dim=3072,
             num_heads=12,
             proj_type="perceptron",
-            norm_name="instance",
+            norm_name="batch",
             res_block=True,
         )
 
