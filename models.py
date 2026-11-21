@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from mati import ModalityAwareTokenInteraction
 from monai.networks.nets import UNETR, SwinUNETR
 
 
 # =========================================================
-# UNETR baseline (with skip locations described in the paper)
+# UNETR baseline 
 # =========================================================
 class UNETR_Baseline(UNETR):
     def forward(self, x_in):
@@ -66,7 +67,6 @@ class UNETR_ModalityAware_S(nn.Module):
     def forward(self, x):
         vit_out, hidden_states = self.unetr.vit(x)
 
-        # MONAI returns [Z1, Z2, ..., Z12]
         Z3 = hidden_states[2]
         Z6 = hidden_states[5]
         Z9 = hidden_states[8]
@@ -160,94 +160,6 @@ class UNETR_ModalityAware_E(nn.Module):
 
 
 # =========================================================
-# SwinUNETR
-# =========================================================
-def build_swin_unetr():
-    return SwinUNETR(
-        img_size=(128, 128, 128),
-        in_channels=4,
-        out_channels=3,
-        feature_size=48,
-        use_checkpoint=True,
-    )
-
-
-# =========================================================
-# UNet++ (3D)
-# =========================================================
-class ConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-
-        self.double_conv = nn.Sequential(
-            nn.Conv3d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv3d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True),
-        )
-
-    def forward(self, x):
-        return self.double_conv(x)
-
-
-class UNetPP(nn.Module):
-    def __init__(self, in_channels=4, out_channels=3, base_channels=32):
-        super().__init__()
-
-        self.conv00 = ConvBlock(in_channels, base_channels)
-        self.pool0 = nn.MaxPool3d(2)
-
-        self.conv10 = ConvBlock(base_channels, base_channels * 2)
-        self.pool1 = nn.MaxPool3d(2)
-
-        self.conv20 = ConvBlock(base_channels * 2, base_channels * 4)
-        self.pool2 = nn.MaxPool3d(2)
-
-        self.conv30 = ConvBlock(base_channels * 4, base_channels * 8)
-        self.pool3 = nn.MaxPool3d(2)
-
-        self.conv40 = ConvBlock(base_channels * 8, base_channels * 16)
-
-        self.up31 = ConvBlock(base_channels * 8 + base_channels * 16, base_channels * 8)
-        self.up21 = ConvBlock(base_channels * 4 + base_channels * 8, base_channels * 4)
-        self.up11 = ConvBlock(base_channels * 2 + base_channels * 4, base_channels * 2)
-        self.up01 = ConvBlock(base_channels + base_channels * 2, base_channels)
-
-        self.final = nn.Conv3d(base_channels, out_channels, kernel_size=1)
-
-    def forward(self, x):
-        x00 = self.conv00(x)
-        x10 = self.conv10(self.pool0(x00))
-        x20 = self.conv20(self.pool1(x10))
-        x30 = self.conv30(self.pool2(x20))
-        x40 = self.conv40(self.pool3(x30))
-
-        x31 = self.up31(torch.cat([
-            F.interpolate(x40, scale_factor=2, mode="trilinear", align_corners=True),
-            x30,
-        ], dim=1))
-
-        x21 = self.up21(torch.cat([
-            F.interpolate(x31, scale_factor=2, mode="trilinear", align_corners=True),
-            x20,
-        ], dim=1))
-
-        x11 = self.up11(torch.cat([
-            F.interpolate(x21, scale_factor=2, mode="trilinear", align_corners=True),
-            x10,
-        ], dim=1))
-
-        x01 = self.up01(torch.cat([
-            F.interpolate(x11, scale_factor=2, mode="trilinear", align_corners=True),
-            x00,
-        ], dim=1))
-
-        return self.final(x01)
-
-
-# =========================================================
 # Model getter
 # =========================================================
 def get_model(model_name: str):
@@ -266,12 +178,6 @@ def get_model(model_name: str):
             norm_name="instance",
             res_block=True,
         )
-
-    if name == "unetpp":
-        return UNetPP()
-
-    if name == "swin_unetr":
-        return build_swin_unetr()
 
     if name == "unetr_modality_aware_s":
         return UNETR_ModalityAware_S()
