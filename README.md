@@ -61,12 +61,6 @@ Implemented by:
 class UNETR_ModalityAware_S(nn.Module)
 ```
 
-The implementation assumes the UNETR ViT encoder returns:
-
-```python
-hidden_states = [Z3, Z6, Z9, Z12]
-```
-
 MATI is applied only to:
 
 ```python
@@ -115,11 +109,10 @@ The code is intended for GPU execution. CUDA-enabled PyTorch should be installed
 
 ## Reproducibility notes
 
-For full reproducibility, use the dependency versions in `requirements.txt` and keep the MONAI version fixed, since the implementation relies on the UNETR ViT hidden-state convention:
-
-```python
-hidden_states = [Z3, Z6, Z9, Z12]
-```
+- For full reproducibility, use the dependency versions in `requirements.txt` and keep the MONAI 1.3.0 version. 
+- The paper-aligned UNETR baseline uses explicitly selected skip locations and therefore differs from the unmodified MONAI UNETR forward implementation.
+- ModaUNETR<sup>S</sup> refines only Z6 and Z9 through MATI before projection into decoder skip features. Its encoder token stream is unchanged.
+- ModaUNETR<sup>E</sup> injects MATI after transformer blocks 3 and 6 (zero-based indices 2 and 5), and extracts skip representations from the modified stream.
 
 ---
 
@@ -127,6 +120,7 @@ hidden_states = [Z3, Z6, Z9, Z12]
 
 - MATI assumes a fixed number of input modalities, defaulting to `num_modalities=4`.
 - The embedding dimension must be divisible by the number of modalities.
+- Missing-modality handling is not implemented in this release.
 - ModaUNETR<sup>S</sup> preserves the UNETR ViT encoder and applies MATI only to skip-token representations.
 - ModaUNETR<sup>E</sup> modifies the ViT forward pass by injecting MATI directly into the running token stream.
 - No modality-specific encoders, additional token streams, or cross-attention streams are introduced.
