@@ -22,9 +22,7 @@ This repository includes:
 - **MATI** module;
 - **UNETR** backbone;
 - **ModaUNETR<sup>S</sup>**, where MATI refines the UNETR skip-token representations `Z6` and `Z9`;
-- **ModaUNETR<sup>E</sup>**, where MATI is injected inside the ViT encoder after transformer blocks 3 and 6;
-- **SwinUNETR** transformer-based baseline;
-- **3D UNet++** convolutional-based baseline.
+- **ModaUNETR<sup>E</sup>**, where MATI is injected inside the ViT encoder after transformer blocks 3 and 6.
 
 ---
 
@@ -78,7 +76,7 @@ Implemented by:
 class UNETR_ModalityAware_E(nn.Module)
 ```
 
-MATI is injected into the ViT token stream after transformer blocks 3 and 6, corresponding to 0-indexed block indices, and skip tokens are extracted at:
+MATI is injected into the ViT token stream after transformer blocks 3 and 6, corresponding to 0-indexed block indices 2 and 5, and skip tokens are extracted at:
 
 ```python
 {2, 5, 8, 11} # Z3, Z6, Z9, Z12
@@ -109,10 +107,10 @@ The code is intended for GPU execution. CUDA-enabled PyTorch should be installed
 
 ## Reproducibility notes
 
-- For full reproducibility, use the dependency versions in `requirements.txt` and keep the MONAI version fixed. 
+- Use the dependency versions in `requirements.txt`. 
 - The UNETR baseline uses explicitly selected skip locations and therefore differs from the unmodified MONAI UNETR forward implementation.
-- ModaUNETR<sup>S</sup> refines only Z6 and Z9 through MATI before projection into decoder skip features. Its encoder token stream is unchanged.
-- ModaUNETR<sup>E</sup> injects MATI after transformer blocks 3 and 6 (zero-based indices 2 and 5), and extracts skip representations from the modified stream.
+- ModaUNETR<sup>S</sup> refines only Z6 and Z9 through MATI before projection into decoder skip features. 
+- ModaUNETR<sup>E</sup> injects MATI after transformer blocks 3 and 6, and extracts skip representations from the modified stream.
 
 ---
 
