@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from mati import ModalityAwareTokenInteraction
-from monai.networks.nets import UNETR, SwinUNETR
+from monai.networks.nets import UNETR
 
 
 # =========================================================
