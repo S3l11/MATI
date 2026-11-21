@@ -109,8 +109,8 @@ The code is intended for GPU execution. CUDA-enabled PyTorch should be installed
 
 ## Reproducibility notes
 
-- For full reproducibility, use the dependency versions in `requirements.txt` and keep the MONAI 1.3.0 version. 
-- The paper-aligned UNETR baseline uses explicitly selected skip locations and therefore differs from the unmodified MONAI UNETR forward implementation.
+- For full reproducibility, use the dependency versions in `requirements.txt` and keep the MONAI version fixed. 
+- The UNETR baseline uses explicitly selected skip locations and therefore differs from the unmodified MONAI UNETR forward implementation.
 - ModaUNETR<sup>S</sup> refines only Z6 and Z9 through MATI before projection into decoder skip features. Its encoder token stream is unchanged.
 - ModaUNETR<sup>E</sup> injects MATI after transformer blocks 3 and 6 (zero-based indices 2 and 5), and extracts skip representations from the modified stream.
 
