@@ -21,8 +21,8 @@ def replace_leaky_relu(module):
 # =========================================================
 class UNETR_Baseline(UNETR):
     def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
-    replace_leaky_relu(self)
+        super().__init__(*args, **kwargs)
+        replace_leaky_relu(self)
     
     def forward(self, x_in):
         vit_out, hidden_states = self.vit(x_in)
